@@ -34,7 +34,7 @@ Catálogo de fontes · Relatórios · Franquias · Configurações (versões do 
 - Python não foi adotado: o modelo atual é de regras e roda no servidor Node; a calibração estatística (MAE/WAPE, validação temporal) também. Python/ML entra quando houver dados de operação suficientes para superar a linha de base.
 
 ### Mapeamento das entidades pedidas
-organizations/franchises → `intel_organizations` (matriz/franquia/parceiro) + `intel_org_regions`; users/roles → `users`, `roles` do Romeu + `intel_memberships` (admin_global, gestor_regional, franqueado, analista, consulta);
+organizations/franchises → `intel_organizations` (matriz/franquia/parceiro) + `intel_org_regions`; users/roles → `users`, `roles` + `intel_memberships` (admin_global, gestor_regional, franqueado, analista, consulta);
 states/municipalities → `intel_states`, `intel_municipalities`; geographic_areas, roads, properties, property_documents, charging_stations, charging_connectors, charger_catalog, energy_tariffs, data_sources, data_imports, imported_datasets, geographic_indicators → tabelas `intel_*` homônimas;
 demand_models/demand_model_versions → `intel_model_versions`; demand_scenarios, infrastructure_scenarios, electrical_assessments, financial_projects, project_costs, financial_scenarios → JSONB validado em `intel_studies` (chargers, site, electrical, demand, finance);
 demand_forecasts → `intel_demand_forecasts` (parâmetros + versão + resultado); project_revenues → `intel_study_revenues`; project_reports → `intel_reports`; audit_logs → `audit_log` (triggers); calibração → `intel_hub_observations`.

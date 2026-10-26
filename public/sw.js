@@ -1,4 +1,4 @@
-// Service worker do Romeu.
+// Service worker do Tebras Intelligence.
 // Não armazena páginas nem dados em cache: todas as telas exigem sessão e dados atualizados.
 // Apenas exibe uma página "sem conexão" quando a navegação falha por falta de rede.
 const OFFLINE = "/offline.html";
