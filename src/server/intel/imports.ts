@@ -178,7 +178,14 @@ export async function commitImport(ctx: AuthContext, file: { name: string; buf: 
         for (const v of ok) {
           const key = (v.indicator as string) || o.indicatorFixed;
           if (!key || !(key in INDICATOR_DEFS)) { issues.push({ row: 0, message: `Indicador desconhecido: ${key ?? "(vazio)"} — use ${Object.keys(INDICATOR_DEFS).join(", ")}`, severity: "erro" }); continue; }
-          await tx.insert(intelGeographicIndicators).values({ organizationId: ownerOrg, indicator: key, municipalityCode: v.ibgeCode as number, value: v.value as number, unit: INDICATOR_DEFS[key as keyof typeof INDICATOR_DEFS].unit, nature: "observado", referenceDate: v.referenceDate as string, resolution: "município", quality: o.quality, method: `Importado de ${file.name}`, sourceKey: o.sourceKey, importId: imp.id });
+          let code = v.ibgeCode as number | null;
+          if (code === null) {
+            // Planilhas do SENATRAN trazem nome do município + UF, sem código IBGE
+            const r = await tx.execute<{ c: number }>(sql`select ibge_code as c from intel_municipalities where uf = ${String(v.uf).trim().toUpperCase()} and lower(unaccent_simple(name)) = lower(unaccent_simple(${String(v.municipality).trim()})) limit 1`);
+            code = r.rows[0]?.c ?? null;
+            if (code === null) { issues.push({ row: 0, message: `Município não encontrado: ${v.municipality}/${v.uf} (carregue os municípios do IBGE antes)`, severity: "erro" }); continue; }
+          }
+          await tx.insert(intelGeographicIndicators).values({ organizationId: ownerOrg, indicator: key, municipalityCode: code, value: v.value as number, unit: INDICATOR_DEFS[key as keyof typeof INDICATOR_DEFS].unit, nature: "observado", referenceDate: v.referenceDate as string, resolution: "município", quality: o.quality, method: `Importado de ${file.name}`, sourceKey: o.sourceKey, importId: imp.id });
           inserted++;
         }
       } else if (t === "hub_operations") {

@@ -33,4 +33,4 @@ Perfis: Administrador, Analista de Inteligência, Franqueado e Consulta. Além d
 **vinculado a uma organização** (tela Franquias). Cada organização vê apenas os próprios dados: isolamento no servidor
 e políticas RLS no banco. Em produção, a aplicação deve usar o papel restrito de `db/runtime-role.sql`.
 
-Documentação: [docs/INTELLIGENCE.md](docs/INTELLIGENCE.md) · Backup: [docs/BACKUP_E_RESTAURACAO.md](docs/BACKUP_E_RESTAURACAO.md)
+**Publicação passo a passo: [docs/PUBLICACAO.md](docs/PUBLICACAO.md)** · Documentação: [docs/INTELLIGENCE.md](docs/INTELLIGENCE.md) · Backup: [docs/BACKUP_E_RESTAURACAO.md](docs/BACKUP_E_RESTAURACAO.md)

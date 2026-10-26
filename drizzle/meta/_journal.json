@@ -8,6 +8,13 @@
       "when": 1792976843260,
       "tag": "0000_fundacao",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793027200403,
+      "tag": "0001_link_anuncio",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "intel_properties" ADD COLUMN "listing_url" text;

@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { initialActionState, type ActionState } from "@/lib/action-state";
 import { UFS } from "@/lib/domain/documents";
 
-export type PropertyFormValues = Partial<Record<"name" | "address" | "district" | "city" | "uf" | "zip" | "lat" | "lng" | "polygon" | "areaM2" | "monthlyRent" | "salePrice" | "propertyType" | "occupancy" | "parking" | "streetAccess" | "mainRoadDistanceM" | "destinationsWithin1km" | "objective" | "businessModel" | "status" | "geocodeSource" | "notes", string>>;
+export type PropertyFormValues = Partial<Record<"name" | "address" | "district" | "city" | "uf" | "zip" | "lat" | "lng" | "polygon" | "areaM2" | "monthlyRent" | "salePrice" | "propertyType" | "occupancy" | "parking" | "streetAccess" | "mainRoadDistanceM" | "destinationsWithin1km" | "objective" | "businessModel" | "status" | "geocodeSource" | "listingUrl" | "notes", string>>;
 
 type Opts = { types: Record<string, string>; occupancy: Record<string, string>; objectives: Record<string, string>; statuses: Record<string, string> };
 
@@ -47,6 +47,7 @@ export function PropertyForm({ action, initial, opts }: { action: (p: ActionStat
       <form key={`${state.ts ?? 0}-${vals.lat}-${vals.lng}`} action={formAction} className="space-y-4" noValidate aria-label="Imóvel">
         {state.message && <Alert kind={state.ok ? "success" : "error"}>{state.message}</Alert>}
         <div className="grid gap-3 sm:grid-cols-4">
+          <TextInput label="Link do anúncio" name="listingUrl" type="url" defaultValue={g("listingUrl")} error={e.listingUrl} placeholder="https://…" className="sm:col-span-4" hint="Cole o link do portal/corretor. Os dados do anúncio são digitados abaixo (não há coleta automática de portais)." />
           <TextInput label="Identificação" name="name" required defaultValue={g("name")} error={e.name} className="sm:col-span-2" />
           <SelectInput label="Modelo de negócio" name="businessModel" defaultValue={g("businessModel") || "smart_hub"} options={{ smart_hub: "A — Tebras Smart Hub", b2b: "B — Tebras B2B" }} />
           <SelectInput label="Situação" name="status" defaultValue={g("status") || "prospeccao"} options={opts.statuses} />

@@ -26,7 +26,7 @@ export default async function EditPropertyPage({ params, searchParams }: { param
         name: p.name, address: s(p.address), district: s(p.district), city: s(p.city), uf: s(p.uf), zip: s(p.zip), lat: sp.lat ?? s(p.lat), lng: sp.lng ?? s(p.lng), polygon,
         areaM2: s(p.areaM2), monthlyRent: s(p.monthlyRent).replace(".", ","), salePrice: s(p.salePrice).replace(".", ","), propertyType: s(p.propertyType), occupancy: s(p.occupancy),
         parking: tri(p.parking), streetAccess: tri(p.streetAccess), mainRoadDistanceM: s(p.mainRoadDistanceM), destinationsWithin1km: s(p.destinationsWithin1km), objective: s(p.objective),
-        businessModel: p.businessModel, status: p.status, geocodeSource: s(p.geocodeSource), notes: s(p.notes),
+        businessModel: p.businessModel, status: p.status, geocodeSource: s(p.geocodeSource), listingUrl: s(p.listingUrl), notes: s(p.notes),
       }} />
     </div>
   );

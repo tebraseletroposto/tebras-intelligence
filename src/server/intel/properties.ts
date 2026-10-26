@@ -34,6 +34,7 @@ const propertySchema = z.object({
   businessModel: z.enum(["smart_hub", "b2b"]).default("smart_hub"),
   status: z.enum(["prospeccao", "em_estudo", "aprovado", "descartado", "implantado"]).default("prospeccao"),
   geocodeSource: optionalText(100),
+  listingUrl: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.url({ protocol: /^https?$/, error: "Link inválido (use http:// ou https://)." }).max(1000).nullable()),
   notes: optionalText(5000),
 });
 
@@ -69,7 +70,7 @@ export async function saveProperty(ctx: AuthContext, id: string | null, input: u
     areaM2: d.areaM2 ?? (polyArea ? Math.round(polyArea) : null), monthlyRent: numOrNull(d.monthlyRent), salePrice: numOrNull(d.salePrice),
     propertyType: d.propertyType ?? null, occupancy: d.occupancy ?? null, parking: d.parking, streetAccess: d.streetAccess,
     mainRoadDistanceM: d.mainRoadDistanceM, destinationsWithin1km: d.destinationsWithin1km === null ? null : Math.round(d.destinationsWithin1km),
-    objective: d.objective ?? null, businessModel: d.businessModel, status: d.status, geocodeSource: d.geocodeSource ?? null, notes: d.notes ?? null,
+    objective: d.objective ?? null, businessModel: d.businessModel, status: d.status, geocodeSource: d.geocodeSource ?? null, listingUrl: d.listingUrl, notes: d.notes ?? null,
   };
   return withIntel(ctx, scope, async (tx) => {
     let orgId: string;

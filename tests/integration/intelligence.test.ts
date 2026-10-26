@@ -193,6 +193,13 @@ describe("importação de dados", () => {
     expect(await code(previewImport(analystA.ctx, "properties", { name: "a.xlsx", buf: Buffer.from("nao é zip") }))).toBe("validation");
     expect(await code(previewImport(analystA.ctx, "properties", { name: "a.gpkg", buf: Buffer.from("x") }))).toBe("validation");
   });
+  it("frota no formato SENATRAN (nome do município + UF, sem código IBGE)", async () => {
+    const csv = "UF;MUNICIPIO;ELETRICO;DATA\nSP;SAO PAULO;12345;01/08/2026\nSP;Cidade Inexistente;5;01/08/2026\n";
+    const r = await commitImport(analystA.ctx, { name: "senatran.csv", buf: Buffer.from(csv) }, { uf: "UF", municipality: "MUNICIPIO", value: "ELETRICO", referenceDate: "DATA", ibgeCode: null, indicator: null }, { target: "municipal_indicators", sourceKey: "senatran_frota", indicatorFixed: "frota_bev", quality: "media" });
+    expect(r.inserted).toBe(1);
+    const [ind] = await getDb().select().from(intelGeographicIndicators).where(eq(intelGeographicIndicators.importId, r.importId));
+    expect(ind).toMatchObject({ municipalityCode: 3550308, value: 12345, indicator: "frota_bev" });
+  });
   it("EVIE: exige condições de uso e grava indicadores agregados com proveniência", async () => {
     const evie = "hex_id,centroid_lat,centroid_lng,demand_kwh_day,period_start,period_end\nabc,-23.561,-46.655,800,2026-01-01,2026-06-30\n";
     const map = { areaId: "hex_id", lat: "centroid_lat", lng: "centroid_lng", demandKwhDay: "demand_kwh_day", periodStart: "period_start", periodEnd: "period_end", sessionsDay: null, score: null };

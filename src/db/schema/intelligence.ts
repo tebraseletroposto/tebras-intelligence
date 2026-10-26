@@ -269,6 +269,8 @@ export const intelProperties = pgTable("intel_properties", {
   businessModel: text("business_model").notNull().default("smart_hub"),
   status: text("status").notNull().default("prospeccao"),
   geocodeSource: text("geocode_source"),
+  /** Link do anúncio do imóvel (informado pelo usuário; o sistema não coleta dados de portais). */
+  listingUrl: text("listing_url"),
   notes: text("notes"),
   isDemo: boolean("is_demo").notNull().default(false),
   createdBy: uuid("created_by").references(() => users.id),

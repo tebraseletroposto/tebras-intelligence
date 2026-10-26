@@ -19,7 +19,9 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:all": "pnpm typecheck && pnpm lint && pnpm test",
-    "intel:demo": "tsx scripts/intel-demo.ts"
+    "intel:demo": "tsx scripts/intel-demo.ts",
+    "dados:sp": "tsx --conditions=react-server scripts/carregar-sp.ts",
+    "start:prod": "pnpm db:migrate && pnpm db:seed && next start"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

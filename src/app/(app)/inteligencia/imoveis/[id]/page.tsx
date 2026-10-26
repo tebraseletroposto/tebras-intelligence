@@ -38,7 +38,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
           <DescriptionList items={[
             ["Área", p.areaM2 === null ? null : `${formatNumber(p.areaM2, 0)} m²${data.polygon ? " (polígono)" : ""}`], ["Aluguel mensal", p.monthlyRent === null ? null : formatCurrency(Number(p.monthlyRent))], ["Valor de venda", p.salePrice === null ? null : formatCurrency(Number(p.salePrice))],
             ["Tipo", p.propertyType ? PROPERTY_TYPES[p.propertyType as keyof typeof PROPERTY_TYPES] : null], ["Ocupação", p.occupancy ? OCCUPANCY[p.occupancy as keyof typeof OCCUPANCY] : null], ["Objetivo", p.objective ? OBJECTIVES[p.objective as keyof typeof OBJECTIVES] : null],
-            ["Estacionamento", yn(p.parking)], ["Acesso direto pela rua", yn(p.streetAccess)], ["CEP", p.zip], ["Modelo", p.businessModel === "b2b" ? "B — Tebras B2B" : "A — Tebras Smart Hub"], ["Código IBGE", p.municipalityCode ? String(p.municipalityCode) : null], ["Atualizado", formatDateTime(p.updatedAt)],
+            ["Estacionamento", yn(p.parking)], ["Acesso direto pela rua", yn(p.streetAccess)], ["CEP", p.zip], ["Modelo", p.businessModel === "b2b" ? "B — Tebras B2B" : "A — Tebras Smart Hub"], ["Código IBGE", p.municipalityCode ? String(p.municipalityCode) : null], ["Atualizado", formatDateTime(p.updatedAt)], ["Anúncio", p.listingUrl ? <a href={p.listingUrl} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-brand hover:underline">Abrir anúncio</a> : null],
           ]} />
         </Card>
         <Card>

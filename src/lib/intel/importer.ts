@@ -122,7 +122,9 @@ export const IMPORT_TARGETS = {
   municipal_indicators: {
     label: "Indicadores municipais (frota SENATRAN/DETRAN, IBGE etc.)",
     fields: [
-      { key: "ibgeCode", label: "Código IBGE do município", type: "integer", required: true, aliases: ["cod_ibge", "codigo_ibge", "ibge", "cod_municipio", "código ibge"] },
+      { key: "ibgeCode", label: "Código IBGE do município", type: "integer", aliases: ["cod_ibge", "codigo_ibge", "ibge", "cod_municipio", "código ibge"] },
+      { key: "municipality", label: "Nome do município (se não houver código IBGE)", type: "text", aliases: ["municipio", "município", "cidade", "nome_municipio"] },
+      { key: "uf", label: "UF", type: "text", aliases: ["uf", "estado", "sigla_uf"] },
       { key: "indicator", label: "Indicador", type: "text", aliases: ["indicador", "variavel", "variável"] },
       { key: "value", label: "Valor", type: "number", required: true, aliases: ["valor", "value", "quantidade", "total"] },
       { key: "referenceDate", label: "Data de referência", type: "date", required: true, aliases: ["data", "referencia", "referência", "mes", "mês", "periodo"] },
@@ -234,6 +236,9 @@ export function validateImport(target: ImportTarget, headers: string[], records:
     if (target === "charging_stations" && typeof values.maxPowerKw === "number" && values.maxPowerKw > 1000) {
       issues.push({ row: rowNo, field: "Potência", message: "acima de 1000 kW — provável unidade em W", severity: "erro" }); ok = false;
     }
+    if (target === "municipal_indicators" && values.ibgeCode === null && (values.municipality === null || values.uf === null)) {
+      issues.push({ row: rowNo, field: "Município", message: "informe o código IBGE ou o nome do município com a UF", severity: "erro" }); ok = false;
+    }
     if (target === "charging_stations" && values.verifiedAt === null) issues.push({ row: rowNo, field: "Data de verificação", message: "ausente — registro será marcado como não verificado", severity: "aviso" });
     if (target === "hub_operations" && typeof values.energyKwh === "number" && typeof values.sessions === "number" && values.sessions > 0 && values.energyKwh / values.sessions > 200) {
       issues.push({ row: rowNo, field: "Energia", message: "mais de 200 kWh por sessão — provável unidade em Wh", severity: "erro" }); ok = false;
@@ -255,7 +260,7 @@ function dedupKey(target: ImportTarget, v: ValidatedRow["values"]): string | nul
   switch (target) {
     case "charging_stations": return v.externalId ? `id:${v.externalId}` : v.lat !== null ? `${r5(v.lat)},${r5(v.lng)},${String(v.name ?? "").toLowerCase()}` : null;
     case "properties": return `${String(v.name).toLowerCase()}|${String(v.address ?? "").toLowerCase()}`;
-    case "municipal_indicators": return `${v.ibgeCode}|${v.indicator}|${v.referenceDate}`;
+    case "municipal_indicators": return `${v.ibgeCode ?? `${String(v.municipality).toLowerCase()}/${v.uf}`}|${v.indicator}|${v.referenceDate}`;
     case "hub_operations": return String(v.date);
     case "evie": return v.areaId ? `a:${v.areaId}|${v.periodStart}` : v.lat !== null ? `${r5(v.lat)},${r5(v.lng)}|${v.periodStart}` : null;
   }
