@@ -85,3 +85,12 @@ export async function pointLayers(ctx: AuthContext, b: Bbox) {
     };
   });
 }
+
+/** Configuração do mapa base (provedor configurável) e camadas de calor disponíveis, para os componentes de mapa. */
+export function mapConfig() {
+  return {
+    tileUrl: process.env.MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: process.env.MAP_ATTRIBUTION || '© <a href="https://www.openstreetmap.org/copyright">colaboradores do OpenStreetMap</a>',
+    layers: Object.fromEntries(Object.entries(HEAT_LAYERS).map(([k, v]) => [k, { label: v.label, legend: v.legend, nature: v.nature }])),
+  };
+}

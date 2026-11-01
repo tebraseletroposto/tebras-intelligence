@@ -13,6 +13,8 @@ import { AppError } from "@/server/errors";
 import { getPropertyAnalysis, OBJECTIVES, OCCUPANCY, PROPERTY_STATUS, PROPERTY_TYPES } from "@/server/intel/properties";
 import { createStudyAction, deletePropertyAction } from "../../actions";
 import { NewStudyForm } from "./new-study-form";
+import { LocalHeatMap } from "@/components/intel/local-map";
+import { mapConfig } from "@/server/intel/layers";
 
 export const metadata = { title: "Análise do imóvel" };
 const yn = (b: boolean | null) => (b === null ? null : b ? "Sim" : "Não");
@@ -80,6 +82,12 @@ export default async function PropertyPage({ params, searchParams }: { params: P
         <p className="px-5 py-3 text-xs text-zinc-500">Fluxo de veículos que passa pela região não é demanda de recarga: o modelo de demanda usa a frota elétrica e premissas explícitas.</p>
       </Card>
 
+      {p.lat !== null && p.lng !== null && (
+        <Card>
+          <CardHeader title="Mapa de calor do local" description="Entorno de ~7 km do terreno com raios de 1, 3 e 5 km. Escolha a camada: concorrência, frota, densidade, atividade comercial, fluxo, potencial ou qualidade dos dados." />
+          <div className="p-5"><LocalHeatMap lat={p.lat} lng={p.lng} {...mapConfig()} /></div>
+        </Card>
+      )}
       {a.located && a.competition && (
         <Card>
           <CardHeader title="Concorrência conhecida por raio" description={`${a.coverage.stationsLoaded} carregador(es) na base. Distâncias em linha reta.`} actions={<LinkButton href={`/inteligencia/concorrencia?imovel=${id}`} variant="outline" size="sm">Detalhar</LinkButton>} />

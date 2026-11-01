@@ -14,6 +14,9 @@ import { requirePagePermission } from "@/server/auth/dal";
 import { AppError } from "@/server/errors";
 import { getStudy, REVENUE_CATEGORIES } from "@/server/intel/studies";
 import { addRevenueAction, removeRevenueAction, saveStudyMetaAction, saveStudySectionAction, shareStudyAction, snapshotAction } from "../../actions";
+import { LocalHeatMap } from "@/components/intel/local-map";
+import { FEASIBILITY_LABELS } from "@/lib/intel/compare";
+import { mapConfig } from "@/server/intel/layers";
 import { ChargersEditor, DemandEditor, FinanceEditor, MetaForm, RevenueForm, SiteElectricalEditor } from "./editors";
 
 export const metadata = { title: "Estudo de viabilidade" };
@@ -43,6 +46,21 @@ export default async function StudyPage({ params, searchParams }: { params: Prom
 
       {tab === "resumo" && (
         <>
+          <Card className={cn("overflow-hidden border-2", { viavel: "border-emerald-500", viavel_ressalvas: "border-amber-400", nao_viavel: "border-red-500", inconclusivo: "border-zinc-300" }[s.feasibility.verdict])}>
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-ink px-5 py-4 text-white">
+              <div><p className="text-xs uppercase tracking-widest text-zinc-400">Parecer de viabilidade do ponto</p>
+                <p className="text-2xl font-black">{FEASIBILITY_LABELS[s.feasibility.verdict].label}</p></div>
+              <Badge tone={FEASIBILITY_LABELS[s.feasibility.verdict].tone}>Preliminar · cenário base</Badge>
+            </div>
+            <p className="px-5 pt-4 text-sm text-zinc-800">{s.feasibility.summary}</p>
+            <ul className="grid gap-x-6 gap-y-2 p-5 text-sm sm:grid-cols-2">{s.feasibility.criteria.map((c) => (
+              <li key={c.label} className="flex gap-2"><span aria-hidden className={cn("mt-0.5 font-bold", c.status === "ok" ? "text-emerald-600" : c.status === "falha" ? "text-red-600" : "text-zinc-400")}>{c.status === "ok" ? "✓" : c.status === "falha" ? "✗" : "?"}</span>
+                <span><span className="font-medium">{c.label}</span><span className="block text-xs text-zinc-500">{c.detail}</span></span></li>))}</ul>
+            <p className="border-t border-zinc-100 px-5 py-2 text-[11px] text-zinc-500">✓ atende · ✗ não atende · ? sem dados. Parecer baseado em dados e premissas do estudo; não substitui validação técnica (elétrica) e comercial.</p>
+          </Card>
+          {s.property.lat !== null && s.property.lng !== null && (
+            <Card><CardHeader title="Mapa de calor do local" description="Entorno do terreno com raios de 1, 3 e 5 km." /><div className="p-5"><LocalHeatMap lat={s.property.lat} lng={s.property.lng} {...mapConfig()} /></div></Card>
+          )}
           {!ro && <Card><div className="p-4"><MetaForm action={saveStudyMetaAction.bind(null, id)} name={s.study.name} status={s.study.status} selected={s.study.selectedScenario} /></div></Card>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat label={`Energia vendida/mês (${SCENARIO_LABELS[s.selected]})`} value={sel.forecast.energyPerMonthKwh === null ? "Sem dados" : `${n(sel.forecast.energyPerMonthKwh)} kWh`} hint={sel.forecast.capacityLimited ? "Limitada pela capacidade instalada" : "Demanda captável estimada"} />

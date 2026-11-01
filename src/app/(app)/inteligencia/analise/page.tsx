@@ -35,7 +35,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
         <div className="flex flex-wrap gap-2 border-b border-zinc-100 p-3 text-sm">Ordenar por: {Object.entries(SORTS).map(([k, l]) => <Link key={k} href={`?ordem=${k}`} className={`rounded-full px-3 py-1 ${ordem === k ? "bg-ink text-white" : "bg-zinc-100 hover:bg-zinc-200"}`}>{l}</Link>)}</div>
         {sorted.length === 0 ? <EmptyState title="Nenhum estudo" description="Crie estudos a partir dos imóveis para compor o ranking." action={<LinkButton href="/inteligencia/imoveis">Ir para imóveis</LinkButton>} /> : (
           <Table>
-            <thead><tr><Th>#</Th><Th>Imóvel / endereço</Th><Th className="text-right">Área</Th><Th className="text-right">Aluguel</Th><Th className="text-right">Concorrente + próximo</Th><Th className="text-right">Índice</Th><Th>Confiança</Th><Th className="text-right">Investimento</Th><Th className="text-right">Receita/mês</Th><Th className="text-right">Resultado ano 1</Th><Th className="text-right">Retorno</Th><Th>Pendências</Th><Th>Recomendação</Th></tr></thead>
+            <thead><tr><Th>#</Th><Th>Imóvel / endereço</Th><Th className="text-right">Área</Th><Th className="text-right">Aluguel</Th><Th className="text-right">Concorrente + próximo</Th><Th className="text-right">Índice</Th><Th>Confiança</Th><Th className="text-right">Investimento</Th><Th className="text-right">Receita/mês</Th><Th className="text-right">Resultado ano 1</Th><Th className="text-right">Retorno</Th><Th>Pendências</Th><Th>Viabilidade</Th><Th>Recomendação</Th></tr></thead>
             <tbody className="divide-y divide-zinc-100">{sorted.map((r) => (
               <tr key={r.studyId} className="hover:bg-zinc-50">
                 <Td className="tabular font-bold">{r.rank}</Td>
@@ -49,6 +49,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
                 <Td className={`tabular text-right ${r.operatingYear1 !== null && r.operatingYear1 < 0 ? "text-red-700" : ""}`}>{r.operatingYear1 === null ? "—" : formatCurrency(r.operatingYear1)}</Td>
                 <Td className="tabular text-right">{r.payback === null ? "não atingido" : `${formatNumber(r.payback, 0)} m`}</Td>
                 <Td className="tabular">{r.pendencies}</Td>
+                <Td><Badge tone={r.feasibility === "Viável" ? "success" : r.feasibility === "Não viável" ? "danger" : r.feasibility === "Viável com ressalvas" ? "warning" : "neutral"}>{r.feasibility}</Badge></Td>
                 <Td><Badge tone={tone(r.verdict)}>{r.verdict}</Badge><p className="mt-1 max-w-56 text-[11px] text-zinc-500">{r.reasons}</p></Td>
               </tr>))}</tbody>
           </Table>

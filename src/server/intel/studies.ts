@@ -15,6 +15,7 @@ import { requiredText } from "@/lib/validation/common";
 import type { AuthContext } from "../authz";
 import { notFound, validation } from "../errors";
 import { formDataSafe } from "../validate";
+import { assessFeasibility } from "@/lib/intel/compare";
 import { analyzeSite } from "./analysis";
 import { assertCanEditOrg, assertOrgVisible, loadScope, orgFilter, withIntel, type IntelScope } from "./scope";
 
@@ -171,7 +172,16 @@ export async function computeStudy(tx: Tx, s: typeof intelStudies.$inferSelect) 
 
   const pendencies = [...lv.missing.map((m) => `Elétrica: ${m}`), ...infra.capex.missing, ...financeCompleteness(finance)];
   const nature = prop.isDemo ? "DEMONSTRAÇÃO (dados fictícios)" : sel.forecast.path === "sem_dados" ? "Preliminar — sem dados de demanda" : "Preliminar — simulação baseada em premissas" + (inputsOrigin.bevFleet.nature === "observado" || inputsOrigin.externalDailyKwh.nature === "observado" ? " e dados importados" : "");
-  return { property: prop, infra, lv, location, inputsOrigin, scenarios: scenarioResults, selected: s.selectedScenario as ScenarioKey, sensitivity: sens, calibration, revenues, pendencies, nature, modelVersion: MODEL_VERSION };
+  const feasibility = assessFeasibility({
+    located: prop.lat !== null, potentialScore: location.index.score, confidence: location.index.confidence,
+    demandEstimated: sel.forecast.path !== "sem_dados",
+    financeComplete: !!sel.finance && sel.finance.capexMissing.length === 0 && finance.energyCostPerKwh > 0,
+    operatingYear1: { conservador: scenarioResults.conservador.finance?.firstYear.operatingResult ?? null, base: scenarioResults.base.finance?.firstYear.operatingResult ?? null, otimista: scenarioResults.otimista.finance?.firstYear.operatingResult ?? null },
+    paybackMonths: { conservador: scenarioResults.conservador.finance?.paybackMonths ?? null, base: scenarioResults.base.finance?.paybackMonths ?? null, otimista: scenarioResults.otimista.finance?.paybackMonths ?? null },
+    horizonMonths: finance.horizonMonths, lowVoltage: lv.classification,
+    competitorsWithin1km: location.competition && location.coverage.stationsLoaded ? location.competition.radii.find((r) => r.radiusKm === 1)!.count : null,
+  });
+  return { feasibility, property: prop, infra, lv, location, inputsOrigin, scenarios: scenarioResults, selected: s.selectedScenario as ScenarioKey, sensitivity: sens, calibration, revenues, pendencies, nature, modelVersion: MODEL_VERSION };
 }
 
 export function toFinanceInputs(f: StudyFinance, chargers: StudyChargers, revenues: (typeof intelStudyRevenues.$inferSelect)[], energyMonthKwh: number, a: Pick<DemandAssumptions, "pricePerKwh" | "annualFleetGrowth">): FinanceInputs {
@@ -235,7 +245,7 @@ export async function rankingData(ctx: AuthContext, opts: { org?: string | null;
       }
       const c = await computeStudy(tx, s);
       const sel = c.scenarios[c.selected];
-      out.push({ study: s, property: c.property, index: c.location.index, competition: c.location.competition, infra: c.infra, lv: c.lv, selected: c.selected, scenario: sel, scenarios: c.scenarios, pendencies: c.pendencies, nature: c.nature });
+      out.push({ feasibility: c.feasibility, study: s, property: c.property, index: c.location.index, competition: c.location.competition, infra: c.infra, lv: c.lv, selected: c.selected, scenario: sel, scenarios: c.scenarios, pendencies: c.pendencies, nature: c.nature });
     }
     return { rows: out, scope };
   });

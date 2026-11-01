@@ -294,3 +294,17 @@ describe("recomendação", () => {
     expect(r.find((x) => x.id === "semdados")!.verdict).toBe("aguardar_dados");
   });
 });
+
+import { assessFeasibility, type FeasibilityInput } from "@/lib/intel/compare";
+describe("parecer de viabilidade", () => {
+  const base: FeasibilityInput = { located: true, potentialScore: 70, confidence: "media", demandEstimated: true, financeComplete: true, operatingYear1: { conservador: 1000, base: 50000, otimista: 90000 }, paybackMonths: { conservador: 90, base: 40, otimista: 25 }, horizonMonths: 120, lowVoltage: "potencialmente_compativel", competitorsWithin1km: 0 };
+  it("viável quando paga no prazo e resiste ao conservador", () => expect(assessFeasibility(base).verdict).toBe("viavel"));
+  it("com ressalvas quando o conservador dá prejuízo", () => expect(assessFeasibility({ ...base, operatingYear1: { ...base.operatingYear1, conservador: -5000 } }).verdict).toBe("viavel_ressalvas"));
+  it("não viável quando não recupera e o ano 1 é negativo", () => expect(assessFeasibility({ ...base, operatingYear1: { conservador: -9, base: -5, otimista: 1 }, paybackMonths: { conservador: null, base: null, otimista: 100 } }).verdict).toBe("nao_viavel"));
+  it("inconclusivo sem custos ou sem demanda (nunca conclui sem dados)", () => {
+    expect(assessFeasibility({ ...base, financeComplete: false }).verdict).toBe("inconclusivo");
+    const r = assessFeasibility({ ...base, demandEstimated: false });
+    expect(r.verdict).toBe("inconclusivo");
+    expect(r.summary).toMatch(/demanda estimada/);
+  });
+});

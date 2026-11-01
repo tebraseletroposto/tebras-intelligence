@@ -2,7 +2,7 @@ import "server-only";
 import ExcelJS from "exceljs";
 import { intelReports } from "@/db/schema";
 import { getDb } from "@/db/client";
-import { recommend, VERDICT_LABELS, type ProjectSummary } from "@/lib/intel/compare";
+import { FEASIBILITY_LABELS, recommend, VERDICT_LABELS, type ProjectSummary } from "@/lib/intel/compare";
 import { SCENARIO_KEYS, SCENARIO_LABELS } from "@/lib/intel/demand";
 import { bearingDegrees } from "@/lib/intel/geo";
 import { LV_CLASSES } from "@/lib/intel/low-voltage";
@@ -32,6 +32,11 @@ export async function renderStudyPdf(ctx: AuthContext, studyId: string) {
   doc.font("Helvetica").fontSize(11).fillColor(GREY).text(`${s.study.name} · ${p.name}`);
   doc.moveDown(0.3).font("Helvetica-Bold").fontSize(9).fillColor(RED).text(`NATUREZA DO DOCUMENTO: ${s.nature.toUpperCase()}`);
   doc.font("Helvetica").fontSize(8.5).fillColor(GREY).text(`Data da análise: ${formatDate(new Date())} · Modelo de demanda ${s.modelVersion} · Índice ${s.location.indexVersion}. Distâncias em linha reta. Resultados dependem das premissas listadas e não constituem garantia de faturamento.`, { width: contentW });
+
+  section("Parecer de viabilidade (preliminar)");
+  doc.font("Helvetica-Bold").fontSize(14).fillColor(s.feasibility.verdict === "nao_viavel" ? RED : INK).text(FEASIBILITY_LABELS[s.feasibility.verdict].label.toUpperCase());
+  paragraph(s.feasibility.summary);
+  table([{ w: 0.08, t: "", a: "center" }, { w: 0.4, t: "Critério", a: "left" }, { w: 0.52, t: "Situação", a: "left" }], s.feasibility.criteria.map((c) => [c.status === "ok" ? "OK" : c.status === "falha" ? "NÃO" : "?", c.label, c.detail]));
 
   section("Dados do imóvel");
   table([{ w: 0.3, t: "Campo", a: "left" }, { w: 0.7, t: "Valor", a: "left" }], [
@@ -144,13 +149,13 @@ export async function rankingTable(ctx: AuthContext, org?: string | null) {
       investment: r.scenario.finance?.initialInvestment ?? null, revenueMonth: r.scenario.forecast.grossRevenueMonth,
       operatingYear1: r.scenario.finance?.firstYear.operatingResult ?? null, margin: r.scenario.finance && r.scenario.finance.firstYear.chargingGross > 0 ? r.scenario.finance.firstYear.operatingResult / r.scenario.finance.firstYear.chargingGross : null,
       payback: r.scenario.finance?.paybackMonths ?? null, installedKw: r.infra.installedKw, chargers: r.infra.chargerCount, energyMonth: r.scenario.forecast.energyPerMonthKwh,
-      lv: LV_CLASSES[r.lv.classification].label, pendencies: r.pendencies.length, scenario: SCENARIO_LABELS[r.selected], nature: r.nature, demo: r.property.isDemo,
+      feasibility: FEASIBILITY_LABELS[r.feasibility.verdict].label, lv: LV_CLASSES[r.lv.classification].label, pendencies: r.pendencies.length, scenario: SCENARIO_LABELS[r.selected], nature: r.nature, demo: r.property.isDemo,
     };
   });
 }
 
 const RANK_COLS: [string, (r: Awaited<ReturnType<typeof rankingTable>>[number]) => string | number | null][] = [
-  ["Posição", (r) => r.rank], ["Recomendação", (r) => r.verdict], ["Imóvel", (r) => r.property], ["Estudo", (r) => r.study], ["Endereço", (r) => r.address],
+  ["Posição", (r) => r.rank], ["Parecer de viabilidade", (r) => r.feasibility], ["Recomendação", (r) => r.verdict], ["Imóvel", (r) => r.property], ["Estudo", (r) => r.study], ["Endereço", (r) => r.address],
   ["Latitude", (r) => r.lat], ["Longitude", (r) => r.lng], ["Área (m²)", (r) => r.areaM2], ["Aluguel (R$)", (r) => r.rent], ["Concorrente mais próximo (m)", (r) => (r.nearestCompetitorM === null ? null : Math.round(r.nearestCompetitorM))],
   ["Carregadores em 3 km", (r) => r.competitors3km], ["Índice de potencial", (r) => r.index], ["Confiança", (r) => r.confidence], ["Investimento (R$)", (r) => r.investment],
   ["Receita de recarga/mês (R$)", (r) => r.revenueMonth], ["Resultado operacional ano 1 (R$)", (r) => r.operatingYear1], ["Margem operacional", (r) => r.margin], ["Retorno (meses)", (r) => r.payback],
