@@ -1,0 +1,21 @@
+# Render Blueprint — Tebras Intelligence (sistema Node.js). Banco: Supabase (PostgreSQL + PostGIS).
+services:
+  - type: web
+    name: tebras-intelligence
+    runtime: node
+    plan: free            # gratuito: “dorme” após 15 min sem uso (1º acesso leva ~1 min). Starter (US$ 7/mês) fica sempre ligado.
+    region: oregon
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false       # informado no painel do Render (conexão do Supabase)
+      - key: APP_ENV
+        value: production
+      - key: APP_TIMEZONE
+        value: America/Sao_Paulo
+      - key: DB_POOL_MAX
+        value: "5"

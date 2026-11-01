@@ -1,0 +1,55 @@
+# Operações no banco de PRODUÇÃO sem precisar de terminal:
+# GitHub → Actions → "Banco de dados" → Run workflow → escolha a operação.
+# Requer os segredos do repositório (Settings → Secrets and variables → Actions):
+#   DATABASE_URL (obrigatório) · ADMIN_PASSWORD (só para criar o administrador)
+name: Banco de dados
+on:
+  workflow_dispatch:
+    inputs:
+      operacao:
+        description: "Operação"
+        required: true
+        type: choice
+        options:
+          - preparar-banco
+          - criar-administrador
+          - carregar-dados-sp
+      admin_nome:
+        description: "Nome do administrador (só para criar-administrador)"
+        required: false
+      admin_email:
+        description: "E-mail do administrador (só para criar-administrador)"
+        required: false
+permissions:
+  contents: read
+jobs:
+  executar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      APP_ENV: production
+      INTEL_USER_AGENT: "TebrasIntelligence/1.0 (github.com/tebraseletroposto/tebras-intelligence)"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verificar configuração
+        run: test -n "$DATABASE_URL" || (echo "::error::Cadastre o segredo DATABASE_URL" && exit 1)
+      - name: Preparar banco (migrações + perfis)
+        if: inputs.operacao == 'preparar-banco'
+        run: pnpm db:setup
+      - name: Criar administrador
+        if: inputs.operacao == 'criar-administrador'
+        env:
+          ADMIN_NAME: ${{ inputs.admin_nome }}
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: pnpm db:setup && pnpm user:create-admin
+      - name: Carregar dados reais de SP (IBGE + OpenStreetMap)
+        if: inputs.operacao == 'carregar-dados-sp'
+        run: pnpm db:setup && pnpm dados:sp

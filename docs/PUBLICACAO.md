@@ -1,57 +1,49 @@
-# Publicação: Supabase (banco) + Railway (sistema)
+# Publicação: Supabase (banco) + Render (sistema) + GitHub Actions (operações)
 
-Tempo estimado: 30–40 minutos. Custos: Supabase tem plano gratuito para começar; Railway cobra pelo uso (aprox. US$ 5–20/mês).
+Nenhum terminal é necessário. Tempo estimado: 30 minutos.
 
-## 1. Banco de dados no Supabase
-1. Crie a conta em https://supabase.com e clique em **New project**.
-   - Nome: `tebras-intelligence` · Região: **South America (São Paulo)** · defina uma senha forte e **guarde-a**.
-2. Ative o PostGIS: menu **Database → Extensions** → procure `postgis` → **Enable**.
-3. Copie a conexão: botão **Connect** → aba **ORMs/Direct** → **Session pooler** (porta 5432).
-   Fica assim: `postgresql://postgres.xxxx:SUA_SENHA@aws-0-sa-east-1.pooler.supabase.com:5432/postgres`
-   Acrescente `?sslmode=require` no final.
+## 1. Banco de dados — Supabase
+1. https://supabase.com → **New project** → nome `tebras-intelligence`, região **South America (São Paulo)**, senha forte (guarde).
+2. **Database → Extensions** → `postgis` → **Enable**.
+3. Botão **Connect** (topo) → **Session pooler** → copie a URI e troque `[YOUR-PASSWORD]` pela senha.
+   No final acrescente: `?sslmode=require&uselibpqcompat=true`
+   Resultado: `postgresql://postgres.xxxx:SENHA@aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require&uselibpqcompat=true`
+   Se a senha tiver símbolos (`@ # / ? %`), use só letras e números ou redefina a senha em **Project Settings → Database**.
 
-## 2. Sistema no Railway
-1. Crie a conta em https://railway.com (entre com o GitHub `tebraseletroposto`).
-2. **New Project → Deploy from GitHub repo → tebras-intelligence**.
-3. Em **Variables**, cadastre:
-   | Variável | Valor |
-   | --- | --- |
-   | `DATABASE_URL` | conexão do Supabase (passo 1.3) |
-   | `APP_ENV` | `production` |
-   | `APP_URL` | o endereço gerado pelo Railway (passo 4) |
-   | `APP_TIMEZONE` | `America/Sao_Paulo` |
-   | `INTEL_USER_AGENT` | `TebrasIntelligence/1.0 (seu-email@tebras...)` |
-4. **Settings → Networking → Generate Domain** (gera `https://tebras-intelligence-xxxx.up.railway.app`; depois pode usar um domínio próprio).
-5. O Railway constrói e inicia sozinho (`railway.json`): aplica as migrações, cria os perfis e sobe o sistema.
+## 2. Segredos no GitHub
+Repositório `tebras-intelligence` → **Settings → Secrets and variables → Actions → New repository secret**:
+- `DATABASE_URL` = a URI do passo 1.3
+- `ADMIN_PASSWORD` = a senha do seu usuário no sistema (mín. 10 caracteres, letras e números, sem conter o e-mail)
 
-## 3. Primeiro administrador
-No Railway, abra o serviço → **⋮ → Shell** (ou Railway CLI: `railway run`) e execute:
-```bash
-ADMIN_NAME="Seu Nome" ADMIN_EMAIL=voce@tebras.com.br ADMIN_PASSWORD='SenhaForte#2026' pnpm user:create-admin
-```
-Entre no sistema, abra **Franquias**, entre em **Tebras Eletroposto** e vincule seu e-mail como *Administrador global*.
+## 3. Preparar banco, administrador e dados — GitHub Actions
+Repositório → **Actions** → **Banco de dados** → **Run workflow**, nesta ordem (espere cada um ficar verde ✓):
+1. `preparar-banco`
+2. `criar-administrador` — preencha nome e e-mail
+3. `carregar-dados-sp` — 15 a 30 min (IBGE + OpenStreetMap; pode repetir quando quiser atualizar)
 
-## 4. Carregar os dados reais de São Paulo
-No mesmo Shell:
-```bash
-pnpm dados:sp
-```
-Carrega IBGE (645 municípios, população e área do Censo 2022), carregadores do OpenStreetMap de todo o estado,
-vias principais da Região Metropolitana e polos de atração. Leva de 15 a 30 minutos e pode ser repetido a qualquer momento
-(atualiza sem duplicar). Para uma etapa só: `pnpm dados:sp carregadores`.
+## 4. Sistema — Render
+1. https://render.com → **Get Started** → entre com o **GitHub** (`tebraseletroposto`) e autorize o repositório `tebras-intelligence`.
+2. **New → Blueprint** → escolha `tebras-intelligence` → o Render lê o `render.yaml`.
+3. Quando pedir `DATABASE_URL`, cole a URI do passo 1.3 → **Apply**.
+4. Aguarde o deploy (5–10 min). O endereço aparece no topo: `https://tebras-intelligence-xxxx.onrender.com`.
+5. Em **Environment**, adicione `APP_URL` = esse endereço (o Render reinicia sozinho).
 
-## 5. Frota elétrica (SENATRAN)
-O SENATRAN não tem API; a planilha é baixada manualmente:
-1. Acesse https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-Senatran/estatisticas-frota-de-veiculos-senatran
-2. Baixe a planilha mais recente de **frota por município e tipo de combustível**.
-3. No sistema: **Importação de dados** → tipo *Indicadores municipais* → fonte *SENATRAN — Frota* → envie o arquivo.
-4. Mapeie: *Nome do município* → coluna do município · *UF* → coluna da UF · *Valor* → coluna **ELÉTRICO** ·
-   *Data de referência* → mês da planilha (ou informe no campo de data) · Indicador: `frota_bev`.
-5. A coluna “HÍBRIDO” do SENATRAN **não distingue híbridos plug-in**; por isso não é importada automaticamente como PHEV.
+Plano gratuito: o sistema “dorme” após 15 minutos sem uso e o primeiro acesso leva cerca de 1 minuto.
+Plano Starter (US$ 7/mês): sempre ligado.
 
-## 6. Mapa e geocodificação em produção
-Os servidores públicos do OpenStreetMap atendem uso leve. Com muitos usuários, contrate um provedor (ex.: MapTiler)
-e preencha `MAP_TILE_URL`, `MAP_ATTRIBUTION` e `NOMINATIM_URL`.
+## 5. Primeiro acesso
+1. Abra o endereço, entre com o e-mail do passo 3.2 e a senha `ADMIN_PASSWORD`.
+2. **Franquias → Tebras Eletroposto** → vincule seu e-mail como *Administrador global*.
+3. **Importação de dados** → frota do SENATRAN (ver abaixo).
+4. **Buscar imóveis → Cadastrar imóvel** → cole o link do anúncio e cadastre seus terrenos.
 
-## 7. Backups
-O Supabase faz backups diários automáticos (verifique o plano). Para cópia própria, ver `docs/BACKUP_E_RESTAURACAO.md`.
+## Frota elétrica (SENATRAN)
+1. https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-Senatran/estatisticas-frota-de-veiculos-senatran
+2. Baixe a planilha mais recente de frota por município e combustível.
+3. **Importação de dados** → *Indicadores municipais* → fonte *SENATRAN — Frota* → envie o arquivo.
+4. Mapeie *Nome do município*, *UF*, *Valor* = coluna **ELÉTRICO**, informe a data de referência e o indicador `frota_bev`.
+   A coluna “HÍBRIDO” não distingue plug-in e por isso não é usada como PHEV.
+
+## Produção com mais usuários
+- Mapa e geocodificação: contrate um provedor (ex.: MapTiler) e preencha `MAP_TILE_URL`, `MAP_ATTRIBUTION`, `NOMINATIM_URL` no Render.
+- Backups: o Supabase faz backups diários automáticos; ver também `docs/BACKUP_E_RESTAURACAO.md`.
